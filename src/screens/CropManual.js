@@ -3,8 +3,13 @@ import { View, TouchableOpacity, Text, Image, Button, StyleSheet, ScrollView, La
 import cropData from '../cropData';
 import * as theme from '../constants/Main/theme';
 import * as Progress from 'react-native-progress';
+
+const url = 'http://10.0.2.2:8000/api/ParkingLot/fetchAllParkingLots_admin';
+
+
 const YourComponent = () => {
   const [activeAccordion, setActiveAccordion] = useState(null);
+  const [allPL,setAllPL]=useState();
 
   const toggleAccordion = (index) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -13,9 +18,26 @@ const YourComponent = () => {
 
   const [crops, setCrops] = useState([]);
   const [loading, setLoading] = useState(false);
-
+  const fetchAllPL=async()=>{
+    try {
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+        }
+      });
+      const data = await response.json();
+      console.log(data)
+      setAllPL(data);
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+  }
+  
   useEffect(() => {
     // Fetch and set the crop data
+    fetchAllPL();
     setCrops(cropData);
   }, []);
 
@@ -24,25 +46,8 @@ const YourComponent = () => {
     setLoading(true);
   }
 
-  const renderTableData = (crop) => {
-    const tableData = [
-      ['Weather Conditions', crop.weatherConditions],
-      ['Temperature Range', crop.temperatureRange],
-      ['Soil Type', crop.soilType],
-      ['Water Requirements', crop.waterRequirements],
-      ['High', crop.high],
-      ['Medium', crop.medium],
-      ['Low', crop.low],
-      ['Growing Season', crop.growingSeason],
-      ['Planting Depth', crop.plantingDepth],
-      ['Fertilizer Requirements', crop.fertilizerRequirements],
-      ['Pest and Disease Susceptibility', crop.pestAndDiseaseSusceptibility],
-      ['Harvesting Time', crop.harvestingTime],
-      ['Crop Rotation Recommendations', crop.cropRotationRecommendations],
-      ['Storage and Post-Harvest Handling', crop.storageAndPostHarvestHandling],
-      ['Common Cultivation Practices', crop.commonCultivationPractices],
-    ];
-
+  const renderTableData = (pl) => {
+    
     return (
       <View style={{}}>
         <View >
@@ -69,53 +74,35 @@ const YourComponent = () => {
   };
 
   const cropImageMapping = {
-    Rice: require('../assets/crops/rice.png'),
-    Maize: require('../assets/crops/corn.png'),
-    Wheat: require('../assets/crops/wheat.png'),
-    Pulses: require('../assets/crops/lentils.png'),
-    Sugarcane: require('../assets/crops/sugar-cane.png'),
-    Cotton: require('../assets/crops/cotton.png'),
-    Cotton: require('../assets/crops/cotton.png'),
-    Tea: require('../assets/crops/tea.png'),
-    Coffee: require('../assets/crops/coffee.png'),
-    Potatoes: require('../assets/crops/potato.png'),
-    Onions: require('../assets/crops/onion.png'),
-    Tomatoes: require('../assets/crops/tomato.png'),
-    Cauliflower: require('../assets/crops/cauliflower.png'),
-    Cabbage: require('../assets/crops/cabbage.png'),
-    Brinjal: require('../assets/crops/eggplant.png'),
-    Okra: require('../assets/crops/okra.png'),
-    Mangoes: require('../assets/crops/mango.png'),
-    Lemon: require('../assets/crops/lemon.png'),
-    Grapes: require('../assets/crops/grapes.png'),
-    Guavas: require('../assets/crops/guava.png'),
-    Papayas: require('../assets/crops/papaya.png'),
-    Bananas: require('../assets/crops/banana.png'),
-    Apples: require('../assets/crops/apple.png'),
-    Pomegranates: require('../assets/crops/pomegranate.png'),
+    0: require('../assets/parkingLots/pl1.jpg'),
+    1: require('../assets/parkingLots/pl2.jpg'),
+    2: require('../assets/parkingLots/pl3.jpg'),
+    3: require('../assets/parkingLots/pl4.jpg'),
+    4: require('../assets/parkingLots/pl5.jpg'),
+    
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>Choose a parking lot nearest to you</Text>
       <ScrollView>
-        {crops.map((crop, index) => (
-          <View key={index} style={[styles.accordionContainer]}>
-            <TouchableOpacity onPress={() => toggleAccordion(index)}>
+        {allPL && allPL.map((pl) => (
+          <View key={pl._id} style={[styles.accordionContainer]}>
+            <TouchableOpacity onPress={() => toggleAccordion(pl._id)}>
               <View style={styles.accordionHeader}>
-                <Image source={cropImageMapping[crop.cropName]} style={styles.cropImage} />
+                <Image source={cropImageMapping[Math.floor((Math.random()*10)%5)]} style={styles.cropImage} />
                 <View style={styles.cropInfo}>
                   <Text style={styles.cropType}>{'4km away from you.'}</Text>
-                  <Text style={styles.cropName}>{'Parking lot name'}</Text>
-                  <Text style={styles.cropType2}>{'3 free slot available'}</Text>
-                  <Text style={styles.cropDescription}>{'description/location'}</Text>
+                  <Text style={styles.cropName}>{pl.Name}</Text>
+                  <Text style={styles.cropType2}>{`${pl.TotalSlots} free slot available`}</Text>
+                  <Text style={styles.cropType2}>{`${pl.Fee} Rs/Hour`}</Text>
                 </View>
-                <Text style={styles.arrowIcon}>{activeAccordion === index ? '-' : '+'}</Text>
+                <Text style={styles.arrowIcon}>{activeAccordion === pl._id ? '-' : '+'}</Text>
               </View>
             </TouchableOpacity>
-            {activeAccordion === index && (
+            {activeAccordion === pl._id && (
               <View style={styles.accordionContent}>
-                {renderTableData(crop)}
+                {renderTableData(pl)}
               </View>
             )}
           </View>
@@ -164,8 +151,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#0E8388',
   },
   cropImage: {
-    width: 50,
-    height: 50,
+    width: 80,
+    height: 80,
     marginRight: 10,
     borderRadius: 10,
     backgroundColor: "#0E8388",

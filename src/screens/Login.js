@@ -1,6 +1,7 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   Text,
+  TextInput,
   View,
   StyleSheet,
   Dimensions,
@@ -9,49 +10,47 @@ import {
   Alert,
 } from 'react-native';
 import * as theme from '../constants/Main/theme';
-import {Button, Input} from '../components/Main';
+import { Button, Input } from '../components/Main';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const {width, height} = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 // const VALID_EMAIL = 'contact@react-ui-kit.com';
 const VALID_PASSWORD = '2019bele024';
+const url = 'http://10.0.2.2:8000/api/auth/login';
+
 
 const Login = () => {
   const [ipAddress, setIpAddress] = useState('x');
   const [password, setPassword] = useState(VALID_PASSWORD);
   const [error, setError] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [info, setInfo] = useState({ email: '', password: '' });
   const navigation = useNavigation();
 
-  const handleLogin = () => {
+  const handleChange = (field, text) => {
+    setInfo((prevInfo) => ({ ...prevInfo, [field]: text }));
+  };
+  const handleLogin = async () => {
     Keyboard.dismiss();
     setLoading(true);
-
-    // Fake validation
-    const error = [];
-
-    // No validation needed for IP address
-    //But needed for password
-    if (password !== VALID_PASSWORD) {
-      error.push('password');
-    }
-
-    setTimeout(() => {
-      setError(error);
-      setLoading(false);
-    }, 1500);
-
-
-    if(!ipAddress.length)
-    {
-Alert.alert('IP address required', 'Please enter an IP address to login.');
-      setLoading(false);
-      return;
-    }
-    else if (!error.length) {
-      // Save the IP address using AsyncStorage
-      AsyncStorage.setItem('ipAddress', ipAddress)
+    console.log(info)
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        // Adding body or contents to send
+        body: JSON.stringify(info)
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        Alert.alert('Invalid Credentials!', 'Please check the email and password and try login again.');
+        setLoading(false)
+        return;
+      }
+      AsyncStorage.setItem('token', data.authToken)
         .then(() => {
           Alert.alert('Login success!', 'Redirecting...', [
             {
@@ -66,6 +65,13 @@ Alert.alert('IP address required', 'Please enter an IP address to login.');
           console.log(error);
           // Handle the error
         });
+        AsyncStorage.setItem('name', data.name)
+        setLoading(false)
+    } catch (error) {
+      console.log(error);
+      Alert.alert('Oops!', 'Something went wrong. Try again');
+      setLoading(false)
+      return;
     }
   };
 
@@ -77,20 +83,21 @@ Alert.alert('IP address required', 'Please enter an IP address to login.');
         Login
       </Text>
       <View style={{ marginTop: theme.sizes.margin }}>
-        <Input
-          label="E-mail Address"
-          style={[styles.input, hasError('ipAddress')]}
-          error={hasError('ipAddress')}
-          value={ipAddress}
-          onChangeText={(text) => setIpAddress(text)}
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          value={info.email}
+          onChangeText={(text) => handleChange('email', text)}
+          autoCapitalize="none"
+          placeholderTextColor="#A9A9A9"
         />
-        <Input
-          secure
-          label="Password"
-          error={hasError('password')}
-          style={[styles.input, hasError('password')]}
-          defaultValue={password}
-          onChangeText={(text) => setPassword(text)}
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          value={info.password}
+          onChangeText={(text) => handleChange('password', text)}
+          secureTextEntry
+          placeholderTextColor="#A9A9A9"
         />
         <Button gradient style={{ marginTop: theme.sizes.margin }} onPress={handleLogin}>
           {loading ? (

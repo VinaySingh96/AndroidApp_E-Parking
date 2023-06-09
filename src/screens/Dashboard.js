@@ -9,44 +9,9 @@ import { useEffect } from 'react';
 import { fetchWeatherForecast } from '../../api/weather';
 import { getData } from '../../utils/asyncStorage';
 
+const url = 'http://10.0.2.2:8000/api/ParkingLot/fetchAllParkingLots_admin';
 
 const Dashboard = ({ navigation }) => {
-  const LightIcon = () => (
-    <Image
-      source={require('../assets/icons/bulb.png')}
-      style={{ width: 32, height: 32 }}
-    />
-  );
-  const ACIcon = () => (
-    <Image
-      source={require('../assets/icons/crop.png')}
-      style={{ width: 32, height: 32 }}
-    />
-  );
-  const TempIcon = () => (
-    <Image
-      source={require('../assets/icons/weather.png')}
-      style={{ width: 32, height: 32 }}
-    />
-  );
-  const FanIcon = () => (
-    <Image
-      source={require('../assets/icons/fan.png')}
-      style={{ width: 32, height: 32 }}
-    />
-  );
-  const Timer = () => (
-    <Image
-      source={require('../assets/icons/stopwatch.png')}
-      style={{ width: 32, height: 32 }}
-    />
-  );
-  const ElectricityIcon = () => (
-    <Image
-      source={require('../assets/icons/supply.png')}
-      style={{ width: 32, height: 32 }}
-    />
-  );
 
   const [isMotorOn, setIsMotorOn] = useState('');
   const [isLightOn, setIsLightOn] = useState('');
@@ -54,117 +19,52 @@ const Dashboard = ({ navigation }) => {
   const { current } = weather;
 
   // my data
+  const [name, setName] = useState('');
 
-
-
-
-  //fetch current city weather data
-  const fetchMyWeatherData = async () => {
-    let myCity = await getData('city');
-    let cityName = 'Srinagar';
-    if (myCity) {
-      cityName = myCity;
-    }
-    fetchWeatherForecast({
-      cityName,
-      days: '1',
-    }).then((data) => {
-      console.log(data);
-      setWeather(data);
-    });
-  };
   useEffect(() => {
-    fetchMyWeatherData();
+    const fetchData = async () => {
+      try {
+        const storedName = await AsyncStorage.getItem('name');
+        if (storedName) {
+          setName(storedName);
+        }
+      } catch (error) {
+        console.log('Error retrieving name from AsyncStorage:', error);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  //API call for switching motor
-  const motor = async () => {
+
+  
+
+  const fetchAllPL=async()=>{
     try {
-      const savedIPAddress = await AsyncStorage.getItem('ipAddress');
-      // console.log(`IP address is ${savedIPAddress}`);
-
-      await axios.get(`http://${savedIPAddress}/led`).then(response => {
-        // console.log(response.data);
-        const stringifiedData = JSON.stringify(response.data);
-        if (stringifiedData === '"LED ON"') {
-          SoundPlayer.playSoundFile('on', 'mp3');
-          setIsMotorOn('LED OFF');
-        } else if (stringifiedData === '"LED OFF"') {
-          SoundPlayer.playSoundFile('off', 'mp3');
-          setIsMotorOn('LED ON');
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
         }
-      })
-        .catch(error => {
-          console.log(error);
-          Alert.alert('Unable to connect!', 'Please check your connection to the module.');
-        });
-      // await axios.get('http://192.168.170.177/led');
-      console.log('Motor switched successfully');
-      // Handle any necessary UI updates or actions
+      });
+      const data = await response.json();
+      console.log(data)
+      setAllPL(data);
     } catch (error) {
-      console.error('Failed to send API request', error);
-      // Handle any errors that occurred during the request
+      console.log(error);
+      return;
     }
-  };
-
-  //API call for switching light
-  const light = async () => {
-    try {
-      const savedIPAddress = await AsyncStorage.getItem('ipAddress');
-      // console.log(`IP address is ${savedIPAddress}`);
-
-      await axios.get(`http://${savedIPAddress}/light`).then(response => {
-        // console.log(response.data);
-        const stringifiedData = JSON.stringify(response.data);
-        if (stringifiedData === '"Light ON"') {
-          setIsLightOn('Light OFF');
-        } else if (stringifiedData === '"Light OFF"') {
-          setIsLightOn('Light ON');
-        }
-      })
-        .catch(error => {
-          console.log(error);
-          Alert.alert('Unable to connect!', 'Please check your connection to the module.');
-        });
-      // await axios.get('http://192.168.170.177/led');
-      console.log('Light switched successfully');
-      // Handle any necessary UI updates or actions
-    } catch (error) {
-      console.error('Failed to send API request', error);
-      // Handle any errors that occurred during the request
-    }
-  };
-
-  //for setting motor button style as per switching status
-  const getMotorStyle = () => {
-    // Conditionally return the style based on the LED status
-    if (isMotorOn === 'LED ON') {
-      return styles.button;
-    } else if (isMotorOn === 'LED OFF') {
-      return styles.buttonOn;
-    } else {
-      return styles.button;
-    }
-  };
-
-  //for setting light button style as per switching status
-  const getLightStyle = () => {
-    // Conditionally return the style based on the LED status
-    if (isLightOn === 'Light ON') {
-      return styles.button;
-    } else if (isLightOn === 'Light OFF') {
-      return styles.buttonOn;
-    } else {
-      return styles.button;
-    }
-  };
+  }
+  useEffect(() => {
+    fetchAllPL();
+  }, []);
 
 
   return (
     <Block style={styles.dashboard}>
       <Block column style={{ marginTop: theme.sizes.base }}>
         <Text welcome>Hi,</Text>
-        <Text name>Vinay</Text>
+        <Text >{name}</Text>
       </Block>
 
       <Block row style={{ paddingVertical: 5 }}>
