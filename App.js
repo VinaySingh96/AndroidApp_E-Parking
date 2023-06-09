@@ -49,7 +49,7 @@ const App = () => {
         <Stack.Screen name="Signup" component={Signup} />
         <Stack.Screen name="Dashboard" component={Dashboard} />
         <Stack.Screen name="All Parking Lots" component={CropManual} />
-        <Stack.Screen name="Weather Forecasting" component={Weather}  />
+        {/* <Stack.Screen name="Weather Forecasting" component={Weather}  /> */}
         {/* <Stack.Screen name="Motor Timer" component={MotorTimer}  /> */}
         {/* <Stack.Screen name="Forgot Password" component={ForgotPasswordScreen}  /> */}
       </Stack.Navigator>
